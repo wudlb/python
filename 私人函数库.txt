@@ -1,0 +1,104 @@
+Robot Framework经验谈 - 跨过证书错误页面
+Skip Certificate Error Page If Present
+    [Arguments]    ${title}=Certificate Error: Navigation Blocked    ${skip_link}=id\=overridelink
+     ${status}=    Run Keyword And Return Status    Title Should Be    ${title}
+     Run Keyword if    ${status}    Click Element    ${skip_link} 
+	 
+*************************************************************************************************************
+testCase初始化环境
+	Evaluate	os.system("taskkill /f /im IEDriv* >nul 2>nul")
+	Evaluate	os.system("taskkill /f /im chromedr* >nul 2>nul")
+	Evaluate	os.system("taskkill /f /im geck* >nul 2>nul")
+	Evaluate	os.system("taskkill /f /im iexplore* >nul 2>nul")
+	Evaluate	os.system("rd /s /q %temp% >nul 2>nul")
+testCase释放环境
+	Close Browser 
+**************************************************************************************************************
+检测网站编码格式
+	#coding=utf-8
+import urllib
+from chardet.universaldetector import  UniversalDetector
+
+usock = urllib.urlopen('https://wpt-stg.yylending.com/')
+#创建一个检查对象
+detector = UniversalDetector()
+for line in usock.readline():
+    #分块进行测试，知道达到阈值
+    detector.feed(line)
+    if detector.done: break
+#关闭检测对象
+detector.close()
+usock.close()
+#输出检测结果
+print detector.result
+*************************************************************************************************************
+#coding=utf-8
+import random
+from datetime import timedelta,date
+
+# 随机生成手机号码
+def createPhone():
+    prelist = ["130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "147", "150", "151", "152", "153",
+               "155", "156", "157", "158", "159", "186", "187", "188"]
+    return random.choice(prelist) + "".join(random.choice("0123456789") for i in range(8))
+
+# 随机生成身份证号
+
+def gennerator():
+    codelist = range(110101,110109)+range(110111,110117)+range(120101,120106)+range(130123,130133)+range(130521,130535)+range(140423,140431)
+    id = str(codelist[random.randint(0,len(codelist)-1)])
+    id = id + str(random.randint(1930, 2013))  # 年份项
+    da = date.today() + timedelta(days=random.randint(1, 366))  # 月份和日期项
+    id = id + da.strftime('%m%d')
+    id = id + str(random.randint(100, 300))  # ，顺序号简单处理
+
+    count = 0
+    weight = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]  # 权重项
+    checkcode = {'0': '1', '1': '0', '2': 'X', '3': '9', '4': '8', '5': '7', '6': '6', '7': '5', '8': '5', '9': '3',
+                 '10': '2'}  # 校验码映射
+    for i in range(0, len(id)):
+        count = count + int(id[i]) * weight[i]
+        id = id + checkcode[str(count % 11)]  # 算出校验码
+        return id
+
+
+print createPhone()
+print gennerator()
+**************************************************************************************************************************
+import logging
+logging.basicConfig(level=logging.ERROR,
+                    filename=r'E:\log\log.txt',
+                    filemode='a',
+                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+*************************************************************************************************************************
+import logging  
+  
+# 第一步，创建一个logger  
+logger = logging.getLogger()  
+logger.setLevel(logging.INFO)    # Log等级总开关  
+  
+# 第二步，创建一个handler，用于写入日志文件  
+logfile = './log/logger.txt'  
+fh = logging.FileHandler(logfile, mode='w')  
+fh.setLevel(logging.DEBUG)   # 输出到file的log等级的开关  
+  
+# 第三步，再创建一个handler，用于输出到控制台  
+ch = logging.StreamHandler()  
+ch.setLevel(logging.WARNING)   # 输出到console的log等级的开关  
+  
+# 第四步，定义handler的输出格式  Formatter
+formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")  
+fh.setFormatter(formatter)  
+ch.setFormatter(formatter)  
+  
+# 第五步，将logger添加到handler里面  
+logger.addHandler(fh)  
+logger.addHandler(ch)  
+  
+# 日志  
+logger.debug('this is a logger debug message')  
+logger.info('this is a logger info message')  
+logger.warning('this is a logger warning message')  
+logger.error('this is a logger error message')  
+logger.critical('this is a logger critical message')  
+*******************************************************************************************************************************
